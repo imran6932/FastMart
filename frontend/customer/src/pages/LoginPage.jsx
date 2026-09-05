@@ -6,9 +6,11 @@ import { checkServiceability } from '../api/payments'
 import { useAuth } from '../contexts/AuthContext'
 import { persistServiceability } from '../utils/serviceability'
 
-const loginApi = (email, password) => axios.post('/api/auth/token/', { email, password })
-const verifyOtpApi = (email, code) => axios.post('/api/auth/verify-otp/', { email, code })
-const resendOtpApi = (email) => axios.post('/api/auth/resend-otp/', { email })
+const client = axios.create({ baseURL: import.meta.env.VITE_BACKEND_URL, headers: { 'Content-Type': 'application/json' } })
+
+const loginApi = (email, password) => client.post('/auth/token/', { email, password })
+const verifyOtpApi = (email, code) => client.post('/auth/verify-otp/', { email, code })
+const resendOtpApi = (email) => client.post('/auth/resend-otp/', { email })
 
 // Helper function to request push notification registration
 async function requestPushNotification() {
