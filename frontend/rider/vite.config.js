@@ -8,8 +8,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'FastMart',
-        short_name: 'FastMart',
+        name: 'FastMart Rider',
+        short_name: 'FastMart Rider',
         description: 'Fast groceries delivered to your doorstep',
         theme_color: '#0066ff',
         background_color: '#ffffff',
