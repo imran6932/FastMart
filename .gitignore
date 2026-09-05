@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.venv
+*migrations
+*.pyc
+.env
+media
+static/
+staticfiles/
+logs/
+postgres_data/
+*.log
+*.txt
+*.rdb
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables — NEVER commit .env
+.env
+
+
+# Node / React frontends
+node_modules/
+dist/
+.cache/
+.parcel-cache/
+
+# Docker
+.dockerignore
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test/coverage
+.coverage
+htmlcov/
+.pytest_cache/

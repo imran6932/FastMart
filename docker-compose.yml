@@ -1,0 +1,75 @@
+services:
+  # PostGIS database for storing spatial data used by GeoDjango.
+  postgis_db:
+    image: postgis/postgis:18-3.6-alpine
+    container_name: fastmart_postgis_db
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./backend/postgres_data:/var/lib/postgresql
+
+  # Redis serves two purposes:
+  #   DB 0 — Django Channels layer (WebSocket pub/sub for order updates + rider location)
+  #   DB 1 — Django cache backend (rate limiting on auth/payment endpoints)
+  # Keeping them on separate DB indexes means a cache flush doesn't kill open WebSocket groups.
+  redis:
+    image: redis:alpine
+    container_name: fastmart_redis
+    ports:
+      - "6370:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django backend served by Daphne (ASGI) so Django Channels WebSockets work.
+  # Gunicorn/uwsgi are WSGI-only and cannot handle WebSocket upgrades.
+  backend:
+    build: ./backend
+    container_name: fastmart_backend
+    command: bash -c "
+      python manage.py makemigrations accounts orders products payments tracking && 
+      python manage.py migrate  && 
+      python manage.py collectstatic --noinput && 
+      daphne -b 0.0.0.0 -p 8003 fastmart.asgi:application"
+    volumes:
+      - ./backend/static:/app/static
+      - ./backend/media:/app/media
+      - ./backend/DEBUG_LOGS:/app/DEBUG_LOGS
+    ports:
+      - "8003:8003"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - postgis_db
+      - redis
+
+  # Celery worker — processes async tasks (e.g. deferred push notifications).
+  celery_worker:
+    build: ./backend
+    container_name: fastmart_celery_worker
+    command: celery -A fastmart.celery worker --concurrency 2 -logfile="celery_worker.log" --loglevel=INFO
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - celery_beat
+    restart: unless-stopped
+
+  # Celery Beat — fires periodic tasks (stock hold sweep every 2 min).
+  # DatabaseScheduler stores the schedule in Postgres so it persists across restarts
+  # and can be edited via Django Admin without redeploying.
+  celery_beat:
+    build: ./backend
+    container_name: fastmart_celery_beat
+    command: celery -A fastmart.celery beat --logfile="celery_beat.log" --loglevel=INFO
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - backend
+    restart: unless-stopped

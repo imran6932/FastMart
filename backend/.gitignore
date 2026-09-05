@@ -1,0 +1,12 @@
+__pycahe__
+*.venv
+*migrations
+*.pyc
+.env
+media
+staticfiles
+logs/
+*.log
+*.txt
+*.rdb
+!requirements.txt
