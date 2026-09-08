@@ -47,7 +47,7 @@ nginx-restart:
 	sudo systemctl restart nginx
 
 
-docker-compose-restart: deploy-frontend docker-compose-down docker-compose-build docker-compose-up nginx-restart
+docker-compose-restart: docker-compose-down deploy-frontend docker-compose-build docker-compose-up nginx-restart
 	@echo "Docker compose restarted."
 
 

@@ -17,8 +17,7 @@ for app in "${APPS[@]}"; do
   echo "== Extracting dist for $app =="
   docker create --name "temp-${app}" "fastmart-${app}-build"
 
-  mkdir -p "${DEPLOY_ROOT}"
-  rm -rf "${DEPLOY_ROOT}/${app}/dist"
+  rm -rf "${DEPLOY_ROOT}/${app}/dist/"
   echo "removed old dist for $app"
   docker cp "temp-${app}:/app/dist" "${DEPLOY_ROOT}/${app}/dist"
 
