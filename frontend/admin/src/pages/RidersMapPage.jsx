@@ -204,12 +204,7 @@ export default function RidersMapPage() {
             ? 'wss'
             : 'ws'
 
-        const backendHost =
-          window.location.hostname === 'localhost'
-            ? 'localhost:8000'
-            : window.location.host
-
-
+        const backendHost = import.meta.env.VITE_BACKEND_URL
         list.forEach((rider) => {
           if (
             !rider.lat ||

@@ -71,10 +71,7 @@ export default function RiderTrackPage() {
         ? 'wss'
         : 'ws'
 
-    const backendHost =
-      window.location.hostname === 'localhost'
-        ? 'localhost:8000'
-        : window.location.host
+    const backendHost = import.meta.env.VITE_BACKEND_URL
 
     const wsHandle = createReconnectingSocket(
       `${protocol}://${backendHost}/ws/riders/${riderId}/?token=${token}`,
