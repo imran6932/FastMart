@@ -320,7 +320,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Logs are written to a dated file in the logs/ directory
 from datetime import datetime
 
-LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR = BASE_DIR / 'DEBUG_LOGS'
 LOGS_DIR.mkdir(exist_ok=True)
 
 LOG_FILE_NAME = f"{datetime.now().strftime('%b_%d_%Y').lower()}.log"
