@@ -204,7 +204,7 @@ export default function RidersMapPage() {
             ? 'wss'
             : 'ws'
 
-        const backendHost = import.meta.env.VITE_BACKEND_URL
+        const backendHost = import.meta.env.VITE_WEBSOCKET_URL
         list.forEach((rider) => {
           if (
             !rider.lat ||

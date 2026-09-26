@@ -66,7 +66,7 @@ export default function OrderTrackingPage() {
 
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     // Connect to backend (localhost:8000), not the frontend dev server's own host/port.
-    const backendHost = import.meta.env.VITE_BACKEND_URL
+    const backendHost = import.meta.env.VITE_WEBSOCKET_URL
     const wsHandle = createReconnectingSocket(`${protocol}://${backendHost}/ws/orders/${id}/?token=${token}`, {
       onMessage: (e) => {
         const data = JSON.parse(e.data)

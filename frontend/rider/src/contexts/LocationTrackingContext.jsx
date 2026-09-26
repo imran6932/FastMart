@@ -49,7 +49,7 @@ export function LocationTrackingProvider({ children }) {
 
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     // Connect to backend (localhost:8000) instead of frontend server (localhost:3002)
-    const backendHost = import.meta.env.VITE_BACKEND_URL
+    const backendHost = import.meta.env.VITE_WEBSOCKET_URL
     const wsUrl = `${protocol}://${backendHost}/ws/riders/${riderId}/?token=${token}`
 
     console.log('📡 Connecting to WebSocket:', wsUrl)
