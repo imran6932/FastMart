@@ -279,7 +279,7 @@ class CheckoutView(APIView):
             'key_id': {'type': 'string'},
         }}},
         summary='Create order and get Razorpay checkout data',
-        tags=['Payments'],
+        tags=['payments'],
     )
     def post(self, request):
         serializer = CheckoutSerializer(data=request.data)
@@ -315,7 +315,7 @@ class PaymentVerifyView(APIView):
             'order_id': {'type': 'integer'},
         }}},
         summary='Verify Razorpay payment signature (frontend callback)',
-        tags=['Payments'],
+        tags=['payments'],
     )
     def post(self, request):
         serializer = PaymentVerifySerializer(data=request.data)
@@ -358,13 +358,6 @@ class PaymentVerifyView(APIView):
         )
 
 
-class CsrfExemptSessionAuthentication(SessionAuthentication):
-    """Disable CSRF for the webhook endpoint — it's called by Razorpay, not a browser."""
-
-    def enforce_csrf(self, request):
-        return
-
-
 @method_decorator(csrf_exempt, name='dispatch')
 class RazorpayWebhookView(APIView):
     """
@@ -381,14 +374,14 @@ class RazorpayWebhookView(APIView):
       - Always returns 200 OK quickly — Razorpay retries on non-2xx.
     """
 
-    authentication_classes = [CsrfExemptSessionAuthentication]
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     @extend_schema(
         request={'application/json': {'type': 'object'}},
         responses={200: {'type': 'object', 'properties': {'detail': {'type': 'string'}}}},
         summary='Razorpay webhook (payment.captured/authorized/failed, refund.created/processed)',
-        tags=['Payments'],
+        tags=['payments'],
     )
     def post(self, request):
         # ── 1. Verify webhook HMAC signature ──────────────────────────────────

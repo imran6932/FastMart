@@ -25,8 +25,10 @@ Design notes:
 
 from rest_framework import serializers
 
-from apps.accounts.serializers import AddressSerializer
+from apps.accounts.serializers import AddressSerializer, WarehouseSerializer
+from apps.accounts.serializers import RiderProfileSerializer as RiderSerializer
 from apps.products.serializers import ProductSerializer
+from drf_spectacular.utils import extend_schema_field
 
 from .models import CartItem, Order, OrderItem, OrderStatusEvent
 
@@ -44,8 +46,10 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     product = ProductSerializer(read_only=True)
     product_id = serializers.PrimaryKeyRelatedField(
-        source='product',
-        queryset=__import__('apps.products.models', fromlist=['Product']).Product.objects.all(),
+        source="product",
+        queryset=__import__(
+            "apps.products.models", fromlist=["Product"]
+        ).Product.objects.all(),
         write_only=True,
     )
 
@@ -56,12 +60,15 @@ class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = [
-            'id', 'product', 'product_id',
-            'quantity',
-            'subtotal', 'subtotal_display',
-            'added_at',
+            "id",
+            "product",
+            "product_id",
+            "quantity",
+            "subtotal",
+            "subtotal_display",
+            "added_at",
         ]
-        read_only_fields = ['id', 'added_at']
+        read_only_fields = ["id", "added_at"]
 
     def validate_quantity(self, value):
         if value < 1:
@@ -77,28 +84,28 @@ class CartItemSerializer(serializers.ModelSerializer):
         return round(obj.product.price * obj.quantity, 2)
 
     def create(self, validated_data):
-        user = self.context['request'].user
-        product = validated_data['product']
-        quantity = validated_data['quantity']
+        user = self.context["request"].user
+        product = validated_data["product"]
+        quantity = validated_data["quantity"]
 
         # Merge: if the product is already in the cart, increment quantity
         # rather than creating a duplicate row (unique_together constraint).
         item, created = CartItem.objects.get_or_create(
             user=user,
             product=product,
-            defaults={'quantity': quantity},
+            defaults={"quantity": quantity},
         )
         if not created:
             item.quantity += quantity
-            item.save(update_fields=['quantity'])
+            item.save(update_fields=["quantity"])
         return item
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
     """Read-only line item embedded inside OrderDetailSerializer."""
 
-    product_name = serializers.CharField(source='product.name', read_only=True)
-    product_image = serializers.ImageField(source='product.image', read_only=True)
+    product_name = serializers.CharField(source="product.name", read_only=True)
+    product_image = serializers.ImageField(source="product.image", read_only=True)
     price_at_order_display = serializers.SerializerMethodField()
     subtotal = serializers.SerializerMethodField()
     subtotal_display = serializers.SerializerMethodField()
@@ -106,10 +113,15 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = [
-            'id', 'product', 'product_name', 'product_image',
-            'quantity',
-            'price_at_order', 'price_at_order_display',
-            'subtotal', 'subtotal_display',
+            "id",
+            "product",
+            "product_name",
+            "product_image",
+            "quantity",
+            "price_at_order",
+            "price_at_order_display",
+            "subtotal",
+            "subtotal_display",
         ]
 
     def get_price_at_order_display(self, obj) -> float:
@@ -129,7 +141,7 @@ class OrderStatusEventSerializer(serializers.ModelSerializer):
     """
 
     changed_by_email = serializers.CharField(
-        source='changed_by_user.email',
+        source="changed_by_user.email",
         read_only=True,
         allow_null=True,
     )
@@ -137,12 +149,12 @@ class OrderStatusEventSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderStatusEvent
         fields = [
-            'id',
-            'from_status',
-            'to_status',
-            'changed_by_email',
-            'reason',
-            'changed_at',
+            "id",
+            "from_status",
+            "to_status",
+            "changed_by_email",
+            "reason",
+            "changed_at",
         ]
         read_only_fields = fields
 
@@ -160,10 +172,14 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id', 'status', 'customer',
-            'total', 'total_display',
-            'delivery_address_label',
-            'created_at', 'updated_at',
+            "id",
+            "status",
+            "customer",
+            "total",
+            "total_display",
+            "delivery_address_label",
+            "created_at",
+            "updated_at",
         ]
 
     def get_total_display(self, obj) -> float:
@@ -176,7 +192,15 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_customer(self, obj) -> dict:
         customer = obj.customer
-        return f'{customer.first_name} {customer.last_name}'.strip()
+        return f"{customer.first_name} {customer.last_name}".strip()
+
+
+class RiderResponseSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    phone = serializers.CharField(allow_null=True)
+    lat = serializers.FloatField(allow_null=True)
+    lng = serializers.FloatField(allow_null=True)
 
 
 class OrderDetailSerializer(OrderSerializer):
@@ -197,7 +221,7 @@ class OrderDetailSerializer(OrderSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     delivery_address = AddressSerializer(read_only=True)
     status_history = OrderStatusEventSerializer(
-        source='status_events',
+        source="status_events",
         many=True,
         read_only=True,
     )
@@ -207,34 +231,42 @@ class OrderDetailSerializer(OrderSerializer):
 
     class Meta(OrderSerializer.Meta):
         fields = OrderSerializer.Meta.fields + [
-            'items', 'delivery_address', 'status_history', 'warehouse', 'rider',
-            'payment_status',
+            "items",
+            "delivery_address",
+            "status_history",
+            "warehouse",
+            "rider",
+            "payment_status",
         ]
 
+    @extend_schema_field(WarehouseSerializer)
     def get_warehouse(self, obj):
         rider = self._get_rider_profile(obj)
         warehouse = rider.warehouse if rider else None
         if not warehouse or not warehouse.location:
             return None
         return {
-            'id': warehouse.id,
-            'name': warehouse.name,
-            'lat': warehouse.location.y,
-            'lng': warehouse.location.x,
+            "id": warehouse.id,
+            "name": warehouse.name,
+            "lat": warehouse.location.y,
+            "lng": warehouse.location.x,
         }
 
+    @extend_schema_field(RiderResponseSerializer)
     def get_rider(self, obj):
         rider = self._get_rider_profile(obj)
         if not rider:
             return None
         user = rider.user
-        rider_name = f"{user.first_name} {user.last_name}".strip() if user else "Unknown"
+        rider_name = (
+            f"{user.first_name} {user.last_name}".strip() if user else "Unknown"
+        )
         return {
-            'id': rider.id,
-            'name': rider_name,
-            'phone': rider.user.phone if rider.user else None,
-            'lat': rider.current_location.y if rider.current_location else None,
-            'lng': rider.current_location.x if rider.current_location else None,
+            "id": rider.id,
+            "name": rider_name,
+            "phone": rider.user.phone if rider.user else None,
+            "lat": rider.current_location.y if rider.current_location else None,
+            "lng": rider.current_location.x if rider.current_location else None,
         }
 
     @staticmethod
@@ -252,3 +284,11 @@ class OrderDetailSerializer(OrderSerializer):
         except Order.payment.RelatedObjectDoesNotExist:
             return None
 
+class ServiceabilityResponseSerializer(serializers.Serializer):
+    can_proceed = serializers.BooleanField()
+    warehouse_id = serializers.IntegerField(
+        allow_null=True
+    )
+    message = serializers.CharField(
+        allow_null=True
+    )

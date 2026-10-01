@@ -26,7 +26,13 @@ import logging
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db import transaction
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from drf_spectacular.utils import (
+    extend_schema_view,
+    extend_schema,
+    OpenApiParameter,
+    OpenApiTypes,
+    OpenApiResponse,
+)
 from rest_framework import generics, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -90,7 +96,7 @@ class RegisterView(generics.CreateAPIView):
             'email': {'type': 'string'},
         }}},
         summary='Register a new account (customer or rider, sends OTP)',
-        tags=['Auth'],
+        tags=['auth'],
     )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -149,7 +155,7 @@ class VerifyOTPView(APIView):
             404: OpenApiResponse(description='Email not registered'),
         },
         summary='Verify email OTP and activate account',
-        tags=['Auth'],
+        tags=['auth'],
     )
     def post(self, request):
         serializer = OTPVerifySerializer(data=request.data)
@@ -217,7 +223,7 @@ class ResendOTPView(APIView):
         request=ResendOTPSerializer,
         responses={200: {'type': 'object', 'properties': {'detail': {'type': 'string'}}}},
         summary='Resend OTP to email (rate-limited)',
-        tags=['Auth'],
+        tags=['auth'],
     )
     def post(self, request):
         serializer = ResendOTPSerializer(data=request.data)
@@ -275,7 +281,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     @extend_schema(
         summary='Obtain JWT access + refresh tokens (login)',
-        tags=['Auth'],
+        tags=['auth'],
     )
     def post(self, request, *args, **kwargs):
         email = request.data.get('email', '').strip().lower()
@@ -317,7 +323,17 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         # Always returns the requesting user — no pk in the URL needed.
         return self.request.user
 
-
+@extend_schema_view(
+    retrieve=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+            )
+        ]
+    )
+)
 class AddressViewSet(viewsets.ModelViewSet):
     """
     CRUD for /api/auth/addresses/
@@ -330,6 +346,7 @@ class AddressViewSet(viewsets.ModelViewSet):
     other addresses for this user are flipped to is_default=False atomically.
     """
 
+    queryset = Address.objects.all()
     serializer_class = AddressSerializer
     permission_classes = [IsAuthenticated]
 

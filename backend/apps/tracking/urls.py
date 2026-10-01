@@ -1,8 +1,7 @@
 from django.urls import path
 
 from .views import (
-    PushSubscriptionView, RiderActiveOrderView, RiderDutyView, RiderListView, VAPIDPublicKeyView,
-    WarehouseListView, WarehouseCreateView, WarehouseDetailView, ServiceabilityCheckView
+    PushSubscriptionView, RiderActiveOrderView, RiderDutyView, RiderListView, VAPIDPublicKeyView, WarehouseListCreateView, WarehouseDetailView, ServiceabilityCheckView
 )
 
 urlpatterns = [
@@ -25,8 +24,7 @@ urlpatterns = [
     # Warehouse management (admin)
     # GET  /api/warehouses/                  — list active warehouses
     # POST /api/warehouses/                  — create warehouse (admin)
-    path('warehouses/', WarehouseListView.as_view(), name='warehouse_list'),
-    path('warehouses/', WarehouseCreateView.as_view(), name='warehouse_create'),
+    path('warehouses/', WarehouseListCreateView.as_view(), name='warehouse_list_create'),
     
     # GET  /api/warehouses/<id>/             — warehouse details
     # PUT  /api/warehouses/<id>/             — update warehouse (admin)

@@ -33,7 +33,12 @@ import logging
 
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import (
+    extend_schema_view,
+    extend_schema,
+    OpenApiParameter,
+    OpenApiTypes
+)
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsAdminRole, IsCustomer, IsRider
@@ -53,7 +58,17 @@ ALLOWED_RIDER_TRANSITIONS = {
     Order.Status.OUT_FOR_DELIVERY: Order.Status.DELIVERED,
 }
 
-
+@extend_schema_view(
+    retrieve=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+            )
+        ]
+    )
+)
 class CartItemViewSet(viewsets.ModelViewSet):
     """
     GET    /api/orders/cart/         — list cart items for the current user
@@ -63,6 +78,7 @@ class CartItemViewSet(viewsets.ModelViewSet):
     DELETE /api/orders/cart/{id}/    — remove item from cart
     """
 
+    queryset = CartItem.objects.all()
     serializer_class = CartItemSerializer
     permission_classes = [IsCustomer]
 
@@ -82,6 +98,17 @@ class CartItemViewSet(viewsets.ModelViewSet):
         serializer.save()
 
 
+@extend_schema_view(
+    retrieve=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+            )
+        ]
+    )
+)
 class OrderViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
@@ -94,6 +121,7 @@ class OrderViewSet(
     Create/cancel endpoints are added in step 6 (order placement service).
     """
 
+    queryset = Order.objects.all()
     permission_classes = [IsCustomer]
 
     def get_queryset(self):

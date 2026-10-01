@@ -172,6 +172,9 @@ SPECTACULAR_SETTINGS = {
     # Group endpoints by Django app rather than by URL prefix.
     'COMPONENT_SPLIT_REQUEST': True,
     'SORT_OPERATIONS': False,
+     'ENUM_NAME_OVERRIDES': {
+        'FromStatusEnum': 'apps.orders.models.Order.Status'
+    },
 }
 
 

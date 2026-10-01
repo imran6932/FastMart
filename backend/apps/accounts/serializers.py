@@ -140,13 +140,13 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'role', 'rider_profile_id', 'is_on_duty']
         read_only_fields = ['id', 'role', 'rider_profile_id', 'is_on_duty']
 
-    def get_rider_profile_id(self, obj):
+    def get_rider_profile_id(self, obj) -> int | None:
         """Return the rider's RiderProfile.id if user.role == 'rider', else None."""
         if obj.role == User.Role.RIDER and hasattr(obj, 'rider_profile'):
             return obj.rider_profile.id
         return None
 
-    def get_is_on_duty(self, obj):
+    def get_is_on_duty(self, obj) -> bool | None:
         """Return the rider's current duty status if user.role == 'rider', else None."""
         if obj.role == User.Role.RIDER and hasattr(obj, 'rider_profile'):
             return obj.rider_profile.is_on_duty
